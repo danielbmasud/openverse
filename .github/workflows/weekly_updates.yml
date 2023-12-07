@@ -2,14 +2,8 @@ name: Weekly updates
 # ℹ️ https://github.com/WordPress/openverse/blob/main/.github/GITHUB.md#project-automation
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: "1 0 * * 1" # just after midnight on Monday
-
-env:
-  ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-  MAKE_USERNAME: ${{ secrets.MAKE_USERNAME }}
-  MAKE_PASSWORD: ${{ secrets.MAKE_PASSWORD }} # application password, not login password
 
 jobs:
   make_post:
@@ -19,11 +13,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup CI env
-        uses: ./.github/actions/setup-env
-        with:
-          setup_python: false
-          install_recipe: node-install
-
       - name: Publish post
-        run: just automations/js/report
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          script: |
+            const { main } = await import('${{ github.workspace}}/automations/js/src/last_week_tonight.mjs'
+            await main(github, core)

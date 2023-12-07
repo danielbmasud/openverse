@@ -2,8 +2,9 @@ name: Weekly updates
 # ℹ️ https://github.com/WordPress/openverse/blob/main/.github/GITHUB.md#project-automation
 
 on:
-  schedule:
-    - cron: "1 0 * * 1" # just after midnight on Monday
+  workflow_dispatch:
+    schedule:
+      - cron: "1 0 * * 1" # just after midnight on Monday
 
 jobs:
   make_post:

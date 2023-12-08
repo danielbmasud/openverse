@@ -18,6 +18,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.ACCESS_TOKEN }}
+          make_username: ${{ secrets.MAKE_USERNAME }}
+          make_password: ${{ serets.MAKE_PASSWORD }}
           script: |
             const { main } = await import('${{ github.workspace}}/automations/js/src/last_week_tonight.mjs'
             await main(github, core)

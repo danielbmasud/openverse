@@ -12,25 +12,36 @@ import { Octokit } from '@octokit/rest'
 
 import { escapeHtml } from './utils/html.mjs'
 
-/* Environment variables */
+/**
+ * Retrieves and ensures required environment variables exist
+ *@returns {string[]} containing environment variables 
+ */
+const getEnvironmentVariables = () => {
 
-/** the personal access token for the GitHub API */
-const pat = process.env.ACCESS_TOKEN
-/** the username for the Make site account making the post */
-const username = process.env.MAKE_USERNAME
-/** the application password, not login password, for the Make site */
-const password = process.env.MAKE_PASSWORD
+  /** the personal access token for the GitHub API */
+  const pat = process.env.ACCESS_TOKEN
+  /** the username for the Make site account making the post */
+  const username = process.env.MAKE_USERNAME
+  /** the application password, not login password, for the Make site */
+  const password = process.env.MAKE_PASSWORD
 
-if (!pat) {
-  console.log('GitHub personal access token "ACCESS_TOKEN" is required.')
+  if (!pat) {
+    console.log('GitHub personal access token "ACCESS_TOKEN" is required.')
+  }
+  if (!username) {
+    console.log('Make site username "MAKE_USERNAME" is required.')
+  }
+  if (!password) {
+    console.log('Make site application password "MAKE_PASSWORD" is required.')
+  }
+  if (!(pat && username && password)) process.exit(1)
+
+  return [pat, username, password]
 }
-if (!username) {
-  console.log('Make site username "MAKE_USERNAME" is required.')
-}
-if (!password) {
-  console.log('Make site application password "MAKE_PASSWORD" is required.')
-}
-if (!(pat && username && password)) process.exit(1)
+
+
+
+
 
 /* Read GitHub information from the data files */
 
@@ -136,6 +147,19 @@ const postActivities = (activities) => {
     }
   )
 }
+
+/**
+ *This is the entrypoint of the script
+ *
+ *@param octokit {import('@octokit/rest').Octokit} Octokit instance to use
+ *@param core {import('@actions/core').core} core logger
+ */
+export const main = async (octokit, core) => {
+
+  const [pat, username, password] = getEnvironmentVariables()
+
+}
+
 
 // Entry point
 const reportData = []

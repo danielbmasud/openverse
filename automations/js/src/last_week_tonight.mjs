@@ -9,14 +9,16 @@ import { resolve } from 'path'
 import yaml from 'js-yaml'
 import axios from 'axios'
 import { Octokit } from '@octokit/rest'
+import core form '@actions/core'
 
 import { escapeHtml } from './utils/html.mjs'
 
+
 /**
  * Retrieves and ensures required environment variables exist
- *@returns {string[]} containing environment variables 
+ * @returns {string[]} containing environment variables 
  */
-const getEnvironmentVariables = () => {
+const getEnvironmentVariables = (core) => {
 
   /** the personal access token for the GitHub API */
   const pat = process.env.ACCESS_TOKEN
@@ -26,13 +28,13 @@ const getEnvironmentVariables = () => {
   const password = process.env.MAKE_PASSWORD
 
   if (!pat) {
-    console.log('GitHub personal access token "ACCESS_TOKEN" is required.')
+    core.notice('GitHub personal access token "ACCESS_TOKEN" is required.')
   }
   if (!username) {
-    console.log('Make site username "MAKE_USERNAME" is required.')
+    core.notice('Make site username "MAKE_USERNAME" is required.')
   }
   if (!password) {
-    console.log('Make site application password "MAKE_PASSWORD" is required.')
+    core.notice('Make site application password "MAKE_PASSWORD" is required.')
   }
   if (!(pat && username && password)) process.exit(1)
 
@@ -43,26 +45,35 @@ const getEnvironmentVariables = () => {
 
 
 
-/* Read GitHub information from the data files */
+/**
+ * Read GitHub information from the data files 
+ * @returns {Array} containing all repos to report
+ */
+const getRepos = () => {
+  const githubDataFile = resolve('../data/github.yml') // resolved from `package.json`
+  const githubInfo = yaml.load(readFileSync(githubDataFile))
+  const org = githubInfo.org
+  const repos = Object.values(githubInfo.repos)
+  return repos
+}
 
-const githubDataFile = resolve('../data/github.yml') // resolved from `package.json`
-const githubInfo = yaml.load(readFileSync(githubDataFile))
-const org = githubInfo.org
-const repos = Object.values(githubInfo.repos)
 
-/* Time period */
-
-const msInWeeks = (weeks) => weeks * 7 * 24 * 60 * 60 * 1e3
-// End date is always today
-const [endDate] = new Date().toISOString().split('T')
-// Start date is one week before today
-const [startDate] = new Date(new Date().getTime() - msInWeeks(1))
-  .toISOString()
-  .split('T')
+/**
+ * Returns the start date for closed issues/PRs
+ * @returns {Date[]} - contains start and end date
+ */
+const getDates = () => {
+  const msInWeeks = (weeks) => weeks * 7 * 24 * 60 * 60 * 1e3
+  // End date is always today
+  const [endDate] = new Date().toISOString().split('T')
+  // Start date is one week before today
+  const [startDate] = new Date(new Date().getTime() - msInWeeks(1))
+    .toISOString()
+    .split('T')
+  return [startDate, endDate]
+}
 
 /* GitHub API */
-
-const octokit = new Octokit({ auth: pat })
 const mergedPrsQ = (repo) =>
   `repo:${org}/${repo} is:pr is:merged merged:>=${startDate}`
 const closedIssuesQ = (repo) =>
@@ -157,26 +168,37 @@ const postActivities = (activities) => {
 export const main = async (octokit, core) => {
 
   const [pat, username, password] = getEnvironmentVariables()
-
+  const repos = getRepos()
+  const [startDate, endDate] = getDates()
+  const reports = createReport(octokit, repos)
+  const res = await postActivities(reports)
+  if (res.status !== 201) {
+    core.error('Create post request failed. See the logs.')
+    process.exitCode = 1
+  }
+  core.info(JSON.stringify(res.data, null, 2))
 }
 
+/**
+ * Finds all closed issues and PRs and returns them
+ *
+ * @param octokit {import('@octokit/rest').Octokit} Octokit instance
+ * @returns {Array} containing all closed issues and merged PRs
+ */
+const createReport = (octokit, repos) => {
+	
+  const reportData = []
+  for (const repo of repos) {
+    const closedIssues = (
+      await octokit.rest.search.issuesAndPullRequests({ q: closedIssuesQ(repo) })
+    ).data.items
+    const mergedPrs = (
+      await octokit.rest.search.issuesAndPullRequests({ q: mergedPrsQ(repo) })
+    ).data.items
+    if (closedIssues.length || mergedPrs.length)
+      reportData.push({ repo, closedIssues, mergedPrs })
+  }
 
-// Entry point
-const reportData = []
-for (const repo of repos) {
-  const closedIssues = (
-    await octokit.rest.search.issuesAndPullRequests({ q: closedIssuesQ(repo) })
-  ).data.items
-  const mergedPrs = (
-    await octokit.rest.search.issuesAndPullRequests({ q: mergedPrsQ(repo) })
-  ).data.items
-  if (closedIssues.length || mergedPrs.length)
-    reportData.push({ repo, closedIssues, mergedPrs })
+  return reportData
 }
 
-const res = await postActivities(reportData)
-if (res.status !== 201) {
-  console.error('Create post request failed. See the logs.')
-  process.exitCode = 1
-}
-console.log(JSON.stringify(res.data, null, 2))

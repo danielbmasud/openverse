@@ -102,7 +102,9 @@ const sortByLabel = (itemA, itemB) => {
  */
 const getItemsHtml = (title, items) => {
   if (!items.length) return []
-	
+
+  items.sort(sortByLabel)
+  let previousLabel = ""
   return [
     `<h3>${title}</h3>`,
     '<ul>',
@@ -110,6 +112,8 @@ const getItemsHtml = (title, items) => {
       const href = item.html_url
       const number = `#${item.number}`
       const title = escapeHtml(item.title)
+      const isNewLabel = items.label.name.localeCompare(previousLabel) !== 0
+      const label = isNewLabel ? `<h4>${items.label.name}</h4>` : ''
       return `<li><a href="${href}">${number}</a>: ${title}`
     }),
     '</ul>',

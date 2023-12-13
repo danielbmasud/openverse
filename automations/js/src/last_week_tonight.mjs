@@ -79,6 +79,18 @@ const mergedPrsQ = (repo) =>
 const closedIssuesQ = (repo) =>
   `repo:${org}/${repo} is:issue is:closed closed:>=${startDate}`
 
+/**
+ * Function used in sort items by label call
+ *
+ *  @param {itemA} - first item to compare
+ *  @param {itemB} - second item to compare
+ *  @returns {Number} - used in sort function to dictate how items are sorted
+ */
+const sortByLabel = (itemA, itemB) => {
+  const labelNameA = itemA.label.name
+  const labelNameB = itemB.label.name
+  return labelNameA.localeCompare(labelNameB)
+}
 /* Format issues, PRs and repos as HTML */
 
 /**
@@ -90,11 +102,11 @@ const closedIssuesQ = (repo) =>
  */
 const getItemsHtml = (title, items) => {
   if (!items.length) return []
-
+	
   return [
     `<h3>${title}</h3>`,
     '<ul>',
-    ...items.map((item) => {
+    ...items.map((item) => { 
       const href = item.html_url
       const number = `#${item.number}`
       const title = escapeHtml(item.title)

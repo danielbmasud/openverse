@@ -103,8 +103,6 @@ const sortByLabel = (itemA, itemB) => {
 const getItemsHtml = (title, items) => {
   if (!items.length) return []
 
-  items.sort(sortByLabel)
-  let previousLabel = ""
   return [
     `<h3>${title}</h3>`,
     '<ul>',
@@ -112,8 +110,6 @@ const getItemsHtml = (title, items) => {
       const href = item.html_url
       const number = `#${item.number}`
       const title = escapeHtml(item.title)
-      const isNewLabel = items.label.name.localeCompare(previousLabel) !== 0
-      const label = isNewLabel ? `<h4>${items.label.name}</h4>` : ''
       return `<li><a href="${href}">${number}</a>: ${title}`
     }),
     '</ul>',
@@ -136,6 +132,46 @@ const getRepoHtml = ({ repo, mergedPrs, closedIssues }) => {
   ]
 }
 
+/**
+ * Adds an activity to an Object sorted by label
+ *
+ * @param {activity} - object returned by github containing an issue/PR
+ * @param {{label: string, activity: object}} - objects sorted by label
+ * @param {string} - issue/PR's assigned stack label
+ */
+const addActivity = (activity, activityList, label) => {
+  if !(Object.hasOwn(activityList, label)) {
+    activityList[label] = []
+  }
+  activityList[label].push(activity)
+}
+
+/**
+ * Sorts all the activities by label
+ * @param {activities[]} - array with all issues and PRs closed
+ *
+ */
+const sortActivitiesByLabel = (activities) => {
+  
+  let sortedActivities = {}
+  const stackPrefix = 'stack:'
+  const unlabeledTitle = 'Unlabeled'
+  for (let i = 0; i < activities.length; i++) {
+    // This array contains all the stack labels handling an issue/PR assigned multiple stacks
+    const currLabels = activities[i].labels.filter(str => str.includes(stackPrefix))
+    if (!currLabels.length) {
+      addActivity(activities[i], sortedActivities, unlabeledTitle)
+    } else {
+      for (let j = 0; j < currLabels.length; j++) {
+        addActivity(activities[i], sortedActivites, currLabels[j])       
+      }
+    }
+  }
+
+  
+}
+
+
 /* Create post on Make site. */
 
 /**
@@ -148,6 +184,7 @@ const getRepoHtml = ({ repo, mergedPrs, closedIssues }) => {
  * @returns {Promise} - the response for the POST request
  */
 const postActivities = (activities) => {
+  const sortedReport = sortActivitiesByLabel(activities)
   const report = activities.map(getRepoHtml).flat().join('\n')
 
   const MAKE_SITE_API = 'https://make.wordpress.org/openverse/wp-json/wp/v2/'

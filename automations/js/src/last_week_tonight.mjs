@@ -154,7 +154,7 @@ const addActivity = (activity, activityList, label) => {
 const sortActivitiesByLabel = (activities) => {
   
   let sortedActivities = {}
-  const stackPrefix = 'stack:'
+  const stackPrefix = '🧱 stack:'
   const unlabeledTitle = 'Unlabeled'
   for (let i = 0; i < activities.length; i++) {
     // This array contains all the stack labels handling an issue/PR assigned multiple stacks
@@ -163,7 +163,7 @@ const sortActivitiesByLabel = (activities) => {
       addActivity(activities[i], sortedActivities, unlabeledTitle)
     } else {
       for (let j = 0; j < currLabels.length; j++) {
-        addActivity(activities[i], sortedActivites, currLabels[j])       
+        addActivity(activities[i], sortedActivites, currLabels[j].trim())
       }
     }
   }

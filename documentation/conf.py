@@ -78,6 +78,7 @@ html_show_copyright = False
 
 issuetracker = "github"
 issuetracker_project = "WordPress/openverse"
+githubusermention = True
 
 # The default for this is a sensible one for ReadTheDocs but
 # our site is served directly at the root docs.openverse.org URL
@@ -87,4 +88,9 @@ notfound_urls_prefix = "/"
 redirects = {
     "meta/traffic/index": "/meta/monitoring/traffic/index.html",
     "meta/traffic/runbooks/identifying-and-blocking-traffic-anomalies": "/meta/monitoring/traffic/runbooks/identifying-and-blocking-traffic-anomalies.html",  # noqa: E501
+    "meta/codespell": "/meta/contribution/codespell.html",
+    "meta/communication_aliases": "/meta/contribution/communication_aliases.html",
+    "meta/dev_flow": "/meta/contribution/dev_flow.html",
+    "meta/github_contribution_practices": "/meta/contribution/github_contribution_practices.html",
+    "meta/maintainer_tasks": "/meta/contribution/maintainer_tasks.html",
 }

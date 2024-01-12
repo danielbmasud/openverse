@@ -9,7 +9,7 @@ import { resolve } from 'path'
 import yaml from 'js-yaml'
 import axios from 'axios'
 import { Octokit } from '@octokit/rest'
-import core form '@actions/core'
+import core from '@actions/core'
 
 import { escapeHtml } from './utils/html.mjs'
 
@@ -140,7 +140,7 @@ const getRepoHtml = ({ repo, mergedPrs, closedIssues }) => {
  * @param {string} - issue/PR's assigned stack label
  */
 const addActivity = (activity, activityList, label) => {
-  if !(Object.hasOwn(activityList, label)) {
+  if (!Object.hasOwn(activityList, label)) {
     activityList[label] = []
   }
   activityList[label].push(activity)
@@ -238,7 +238,7 @@ export const main = async (octokit, core) => {
  * @param octokit {import('@octokit/rest').Octokit} Octokit instance
  * @returns {Array} containing all closed issues and merged PRs
  */
-const createReport = (octokit, repos) => {
+const createReport = async (octokit, repos) => {
 	
   const reportData = []
   for (const repo of repos) {
@@ -255,3 +255,5 @@ const createReport = (octokit, repos) => {
   return reportData
 }
 
+const octokit = new Octokit()
+await main(octokit, core)
